@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { CartesianGrid, Line, LineChart, XAxis, YAxis, Legend } from "recharts"
+import { CartesianGrid, Area, AreaChart, XAxis, YAxis, Legend } from "recharts"
 import {
   type ChartConfig,
   ChartContainer,
@@ -8,37 +8,32 @@ import {
 } from "@/components/ui/chart"
 import { formatTickLabel, getTickInterval } from "./utils/dataProcessing"
 
-interface PerformanceChartProps {
+interface ConnectionsChartProps {
   data: Array<{
     index: number
     elapsedSeconds: number
     timeLabel: string
     fullTime: string
-    cpu: number
-    mem: number
+    conn: number
   }>
   timeScale?: 'auto' | 'minutes' | 'hours' | 'days'
 }
 
 const chartConfig = {
-  cpu: {
-    label: "CPU %",
-    color: "#2563eb",
-  },
-  mem: {
-    label: "Memory MB", 
-    color: "#16a34a",
+  conn: {
+    label: "Connections",
+    color: "#dc2626",
   },
 } satisfies ChartConfig
 
-export const PerformanceChart = memo(function PerformanceChart({ 
+export const ConnectionsChart = memo(function ConnectionsChart({ 
   data, 
   timeScale = 'auto' 
-}: PerformanceChartProps) {
+}: ConnectionsChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[500px] flex items-center justify-center border rounded">
-        <p className="text-gray-500">No data to display</p>
+      <div className="h-[400px] flex items-center justify-center border rounded">
+        <p className="text-gray-500">No connection data to display</p>
       </div>
     )
   }
@@ -57,18 +52,25 @@ export const PerformanceChart = memo(function PerformanceChart({
       tickInterval: interval
     }
   }, [data])
-
+  
   return (
-    <ChartContainer config={chartConfig} className="w-full h-[500px]">
-      <LineChart
+    <ChartContainer config={chartConfig} className="w-full h-[400px]">
+      <AreaChart
         data={formattedData}
         margin={{
           left: 30,
-          right: 70,
+          right: 30,
           top: 60,
           bottom: 70,
         }}
       >
+        <defs>
+          <linearGradient id="colorConn" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#dc2626" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#dc2626" stopOpacity={0.1}/>
+          </linearGradient>
+        </defs>
+        
         <CartesianGrid strokeDasharray="3 3" />
         
         <Legend 
@@ -95,21 +97,9 @@ export const PerformanceChart = memo(function PerformanceChart({
           interval={tickInterval}
           tick={{ fontSize: 12 }}
         />
-        
         <YAxis 
-          yAxisId="left"
-          label={{ value: 'CPU %', angle: -90, position: 'insideLeft' }}
-          stroke="#2563eb"
-          domain={[0, 'auto']}
+          label={{ value: 'Connections', angle: -90, position: 'insideLeft' }}
         />
-        
-        <YAxis 
-          yAxisId="right"
-          orientation="right"
-          label={{ value: 'Memory MB', angle: 90, position: 'insideRight' }}
-          stroke="#16a34a"
-        />
-        
         <ChartTooltip 
           content={<ChartTooltipContent />}
           labelFormatter={(value, payload) => {
@@ -121,28 +111,16 @@ export const PerformanceChart = memo(function PerformanceChart({
           }}
         />
         
-        <Line
-          yAxisId="left"
-          dataKey="cpu"
+        <Area
           type="monotone"
-          stroke="#2563eb"
+          dataKey="conn"
+          stroke="#dc2626"
           strokeWidth={2}
-          dot={false}
-          name="CPU %"
+          fill="url(#colorConn)"
+          name="Connections"
           isAnimationActive={false}
         />
-        
-        <Line
-          yAxisId="right"
-          dataKey="mem"
-          type="monotone"
-          stroke="#16a34a"
-          strokeWidth={2}
-          dot={false}
-          name="Memory MB"
-          isAnimationActive={false}
-        />
-      </LineChart>
+      </AreaChart>
     </ChartContainer>
   )
 })
